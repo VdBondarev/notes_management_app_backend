@@ -177,6 +177,60 @@ class NoteServiceImplTest {
         assertEquals(expectedResponseDto, actualResponseDto);
     }
 
+    /*
+    @Override
+ *     public NoteResponseDto getNoteById(Long id) {
+ *         return noteRepository.findById(id)
+ *                 .map(noteMapper::toResponseDto)
+ *                 .orElseThrow(() -> new EntityNotFoundException(
+ *                         "Can't find a note with id " + id
+ *                 ));
+ *     }
+     */
+
+    @Test
+    @DisplayName("""
+            Verify that getNoteById() method works as expected with validId
+            """)
+    public void getNoteById_ValidId_ReturnsValidResponseDto() {
+        Long id = 1L;
+
+        Note expectedNote = new Note()
+                .setId(id)
+                .setTitle("Test title")
+                .setContent("Test content")
+                .setCreatedAt(now())
+                .setLastUpdatedAt(now());
+
+        NoteResponseDto expectedResponseDto = createResponseDtoFromModel(expectedNote);
+
+        when(noteRepository.findById(id)).thenReturn(Optional.of(expectedNote));
+        when(noteMapper.toResponseDto(expectedNote)).thenReturn(expectedResponseDto);
+
+        NoteResponseDto actualResponseDto = noteService.getNoteById(id);
+
+        assertEquals(expectedResponseDto, actualResponseDto);
+    }
+
+    @Test
+    @DisplayName("""
+            Verify that getNoteById() method works as expected with non-valid params
+            """)
+    public void getNoteById_NonValidParams_ThrowsException() {
+        Long id = -10L;
+
+        when(noteRepository.findById(id)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class, () -> noteService.getNoteById(id)
+        );
+
+        String expectedMessage = "Can't find a note with id " + id;
+        String actualMessage = exception.getMessage();
+
+        assertEquals(expectedMessage, actualMessage);
+    }
+
     private NoteResponseDto createResponseDtoFromModel(Note note) {
         return new NoteResponseDto(
                 note.getId(),
@@ -187,4 +241,3 @@ class NoteServiceImplTest {
         );
     }
 }
-
