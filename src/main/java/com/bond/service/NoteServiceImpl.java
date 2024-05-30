@@ -1,7 +1,11 @@
 package com.bond.service;
 
+import static java.time.LocalDateTime.now;
+
+import com.bond.dto.CreateNoteRequestDto;
 import com.bond.dto.NoteResponseDto;
 import com.bond.mapper.NoteMapper;
+import com.bond.model.Note;
 import com.bond.repository.NoteRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,5 +24,14 @@ public class NoteServiceImpl implements NoteService {
                 .stream()
                 .map(noteMapper::toResponseDto)
                 .toList();
+    }
+
+    @Override
+    public NoteResponseDto create(CreateNoteRequestDto requestDto) {
+        Note note = noteMapper.toModel(requestDto);
+        note.setCreatedAt(now());
+        note.setLastUpdatedAt(now());
+        noteRepository.save(note);
+        return noteMapper.toResponseDto(note);
     }
 }
