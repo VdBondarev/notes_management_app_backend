@@ -2,6 +2,7 @@ package com.bond.controller;
 
 import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -225,5 +226,129 @@ class NoteControllerTest extends LinksHolder {
                 .isEqualTo(EntityNotFoundException.class);
         assertThat(expectedMessage).isEqualTo(actualMessage);
     }
-}
 
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH, INSERT_FIVE_NOTES_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD
+    )
+    @Test
+    @DisplayName("""
+            Verify that delete() endpoint works as expected
+            """)
+    public void delete_ValidRequest_Success() throws Exception {
+        Long id = 1L;
+
+        // deleting first record
+        mockMvc.perform(delete("/notes/" + id))
+                .andExpect(status().isNoContent());
+
+        Pageable pageable = PageRequest.of(0, 5);
+
+        String content = objectMapper.writeValueAsString(pageable);
+
+        MvcResult result = mockMvc.perform(get("/notes")
+                        .content(content)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        NoteResponseDto[] responseDtos = objectMapper.readValue(
+                result.getResponse().getContentAsString(), NoteResponseDto[].class
+        );
+
+        // expecting that first record was deleted, and now we have 4 only
+        assertThat(responseDtos).hasSize(4);
+    }
+
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH, INSERT_FIVE_NOTES_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD
+    )
+    @Test
+    @DisplayName("""
+            Verify that search() endpoint works as expected with a valid request
+            """)
+    public void search_ValidRequest_Success() throws Exception {
+        // it should be case-insensitive and find all the required notes
+        NoteRequestDto requestDto = new NoteRequestDto("TitLE", "CONtEnT");
+
+        Pageable pageable = PageRequest.of(0, 5);
+
+        String pageableContent = objectMapper.writeValueAsString(pageable);
+        String requestDtoContent = objectMapper.writeValueAsString(requestDto);
+
+        MvcResult result = mockMvc.perform(get("/notes/search")
+                        .content(pageableContent)
+                        .content(requestDtoContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        NoteResponseDto[] responseDtos = objectMapper.readValue(
+                result.getResponse().getContentAsString(), NoteResponseDto[].class
+        );
+
+        // expecting that all the records are valid
+        assertThat(responseDtos).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("""
+            Verify that search() endpoint works as expected with a non-valid request
+            """)
+    public void search_NonValidRequest_Fail() throws Exception {
+        // this request should not pass and should face an exception
+        NoteRequestDto requestDto = new NoteRequestDto(null, null);
+
+        Pageable pageable = PageRequest.of(0, 5);
+
+        String pageableContent = objectMapper.writeValueAsString(pageable);
+        String requestDtoContent = objectMapper.writeValueAsString(requestDto);
+
+        MvcResult result = mockMvc.perform(get("/notes/search")
+                        .content(pageableContent)
+                        .content(requestDtoContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        String expectedMessage = "Searching should be done by at least 1 param";
+        String actualMessage = result.getResolvedException().getMessage();
+
+        assertThat(expectedMessage).isEqualTo(actualMessage);
+        assertThat(result.getResolvedException().getClass())
+                .isEqualTo(IllegalArgumentException.class);
+    }
+}
+/*
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update a note by id",
+            description = """
+                    Pass as params for updating title or content (or both)
+                    """)
+    public NoteResponseDto update(
+            @PathVariable Long id,
+            @RequestBody NoteRequestDto requestDto
+    ) {
+        return noteService.update(id, requestDto);
+    }
+ */
