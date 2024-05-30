@@ -2,6 +2,7 @@ package com.bond.service;
 
 import static java.time.LocalDateTime.now;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -12,7 +13,9 @@ import com.bond.dto.NoteResponseDto;
 import com.bond.mapper.NoteMapper;
 import com.bond.model.Note;
 import com.bond.repository.NoteRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,7 +83,7 @@ class NoteServiceImplTest {
     @DisplayName("""
             Verify that create() method works as expected
             """)
-    public void create_ValidNote_ReturnsValidNote() {
+    public void create_ValidRequestDto_ReturnsValidResponse() {
         NoteRequestDto requestDto = new NoteRequestDto("Test title", "Test content");
 
         Note expectedNote = new Note()
@@ -106,6 +109,74 @@ class NoteServiceImplTest {
         verifyNoMoreInteractions(noteMapper, noteRepository);
     }
 
+    @Test
+    @DisplayName("""
+            Verify that update() method works as expected with non-valid params
+            """)
+    public void update_NonValidParams_ThrowsException() {
+        // valid id but non-valid request dto, expect IllegalArgumentException
+        NoteRequestDto requestDto = new NoteRequestDto(null, null);
+        Long validId = 1L;
+
+        IllegalArgumentException illegalArgumentException = assertThrows(
+                IllegalArgumentException.class, () -> noteService.update(validId, requestDto)
+        );
+
+        String expectedMessage = """
+                Both title and content cannot be empty
+                Update at least one of them
+                """;
+        String actualMessage = illegalArgumentException.getMessage();
+
+        assertEquals(expectedMessage, actualMessage);
+
+        // valud requestDto, but not valid id, expect EntityNotFoundException
+        NoteRequestDto newRequestDto = new NoteRequestDto("Test title", "Test content");
+        Long nonValidId = -10L;
+
+        when(noteRepository.findById(nonValidId)).thenReturn(Optional.empty());
+        EntityNotFoundException notFoundException = assertThrows(
+                EntityNotFoundException.class, () -> noteService.update(nonValidId, newRequestDto)
+        );
+
+        expectedMessage = "Can't find a note with id " + nonValidId;
+        actualMessage = notFoundException.getMessage();
+        assertEquals(expectedMessage, actualMessage);
+    }
+
+    @Test
+    @DisplayName("""
+            Verify that update() method works as expected with valid params
+            """)
+    public void update_ValidNote_ReturnsValidNote() {
+        NoteRequestDto requestDto = new NoteRequestDto("New title", "New content");
+
+        Long id = 1L;
+
+        Note expectedNote = new Note()
+                .setId(id)
+                .setTitle("Old title")
+                .setContent("Old content")
+                .setCreatedAt(now())
+                .setLastUpdatedAt(now().minusDays(1));
+
+        when(noteRepository.findById(id)).thenReturn(Optional.of(expectedNote));
+
+        expectedNote
+                .setContent(requestDto.content())
+                .setTitle(requestDto.title());
+
+        NoteResponseDto expectedResponseDto = createResponseDtoFromModel(expectedNote);
+
+        when(noteMapper.toUpdatedModel(expectedNote, requestDto)).thenReturn(expectedNote);
+        when(noteRepository.save(expectedNote)).thenReturn(expectedNote);
+        when(noteMapper.toResponseDto(expectedNote)).thenReturn(expectedResponseDto);
+
+        NoteResponseDto actualResponseDto = noteService.update(id, requestDto);
+
+        assertEquals(expectedResponseDto, actualResponseDto);
+    }
+
     private NoteResponseDto createResponseDtoFromModel(Note note) {
         return new NoteResponseDto(
                 note.getId(),
@@ -116,3 +187,4 @@ class NoteServiceImplTest {
         );
     }
 }
+
