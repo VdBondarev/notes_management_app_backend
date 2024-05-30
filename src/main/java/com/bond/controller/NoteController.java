@@ -33,6 +33,12 @@ public class NoteController {
         return noteService.getAllNotes(pageable);
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get a note by id")
+    public NoteResponseDto getNoteById(@PathVariable Long id) {
+        return noteService.getNoteById(id);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a note",
@@ -45,6 +51,10 @@ public class NoteController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update a note by id",
+            description = """
+                    Pass id of a note you want to update as a path parameter
+                    """)
     public NoteResponseDto update(
             @PathVariable Long id,
             @RequestBody NoteRequestDto requestDto

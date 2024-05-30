@@ -12,4 +12,6 @@ public interface NoteService {
     NoteResponseDto create(NoteRequestDto requestDto);
 
     NoteResponseDto update(Long id, NoteRequestDto requestDto);
+
+    NoteResponseDto getNoteById(Long id);
 }

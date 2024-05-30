@@ -47,11 +47,20 @@ public class NoteServiceImpl implements NoteService {
         }
         Note note = noteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Can't find a note with id " + id)
-                );
+                        "Can't find a note with id " + id
+                ));
         note = noteMapper.toUpdatedModel(note, requestDto);
         note.setLastUpdatedAt(now());
         noteRepository.save(note);
         return noteMapper.toResponseDto(note);
+    }
+
+    @Override
+    public NoteResponseDto getNoteById(Long id) {
+        return noteRepository.findById(id)
+                .map(noteMapper::toResponseDto)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Can't find a note with id " + id
+                ));
     }
 }

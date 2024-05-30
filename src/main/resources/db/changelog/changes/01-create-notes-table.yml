@@ -21,6 +21,8 @@ databaseChangeLog:
               - column:
                   name: content
                   type: VARCHAR(255)
+                  constraints:
+                    nullable: false
               - column:
                   name: created_at
                   type: TIMESTAMP
