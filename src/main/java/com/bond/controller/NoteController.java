@@ -10,6 +10,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Notes controller",
-        description = "Endpoints for managing notes (CRUD operations)")
+        description = "Endpoints for managing notes")
 @RestController
 @RequestMapping("/notes")
 @RequiredArgsConstructor
@@ -53,12 +54,35 @@ public class NoteController {
     @PutMapping("/{id}")
     @Operation(summary = "Update a note by id",
             description = """
-                    Pass id of a note you want to update as a path parameter
+                    Pass as params for updating title or content (or both)
                     """)
     public NoteResponseDto update(
             @PathVariable Long id,
             @RequestBody NoteRequestDto requestDto
     ) {
         return noteService.update(id, requestDto);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete a note by id")
+    public void delete(@PathVariable Long id) {
+        noteService.delete(id);
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Search for notes by params",
+            description = """
+                    You can search by 2 params (title and content)
+                    
+                    If both of them are null - you will not get any notes
+                    
+                    If one of them is null - searching will be executed like that: %your_param%
+                    
+                    If both of them are present
+                    Searching will be executed like that: %your_title% and %your_content%
+                    """)
+    public List<NoteResponseDto> search(@RequestBody NoteRequestDto requestDto, Pageable pageable) {
+        return noteService.search(requestDto, pageable);
     }
 }

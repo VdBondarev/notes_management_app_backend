@@ -14,4 +14,8 @@ public interface NoteService {
     NoteResponseDto update(Long id, NoteRequestDto requestDto);
 
     NoteResponseDto getNoteById(Long id);
+
+    void delete(Long id);
+
+    List<NoteResponseDto> search(NoteRequestDto requestDto, Pageable pageable);
 }
