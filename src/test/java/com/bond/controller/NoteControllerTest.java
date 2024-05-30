@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bond.dto.NoteRequestDto;
@@ -55,7 +56,7 @@ class NoteControllerTest extends LinksHolder {
     )
     @Test
     @DisplayName("""
-            Verify that create endpoint works as expected with valid request
+            Verify that create endpoint works as expected with a valid request
             """)
     public void create_ValidRequest_Success() throws Exception {
         NoteRequestDto requestDto = new NoteRequestDto("Test title", "Test content");
@@ -83,9 +84,9 @@ class NoteControllerTest extends LinksHolder {
          (like setting the same time)
          so we ignore these field
          */
-        assertThat(expected).usingRecursiveComparison()
+        assertThat(actual).usingRecursiveComparison()
                 .ignoringFields(CREATED_AT_FIELD, LAST_UPDATED_AT_FIELD)
-                .isEqualTo(actual);
+                .isEqualTo(expected);
     }
 
     @Sql(
@@ -143,7 +144,7 @@ class NoteControllerTest extends LinksHolder {
     )
     @Test
     @DisplayName("""
-            Verify that getAll() endpoint works as expected with valid request
+            Verify that getAll() endpoint works as expected with a valid request
             """)
     public void getAll_ValidRequest_Success() throws Exception {
         Pageable pageable = PageRequest.of(0, 5);
@@ -166,9 +167,9 @@ class NoteControllerTest extends LinksHolder {
                 1L, "First title", "First content", now(), now()
         );
 
-        assertThat(expectedFirstResponseDto).usingRecursiveComparison()
+        assertThat(responseDtos[0]).usingRecursiveComparison()
                 .ignoringFields(CREATED_AT_FIELD, LAST_UPDATED_AT_FIELD)
-                .isEqualTo(responseDtos[0]);
+                .isEqualTo(expectedFirstResponseDto);
     }
 
     @Sql(
@@ -185,7 +186,7 @@ class NoteControllerTest extends LinksHolder {
     )
     @Test
     @DisplayName("""
-            Verify that getById() endpoint works as expected when passing valid id
+            Verify that getById() endpoint works as expected when passing a valid id
             """)
     public void getById_ValidRequest_Success() throws Exception {
         Long id = 1L;
@@ -202,14 +203,14 @@ class NoteControllerTest extends LinksHolder {
                 result.getResponse().getContentAsString(), NoteResponseDto.class
         );
 
-        assertThat(expected).usingRecursiveComparison()
+        assertThat(actual).usingRecursiveComparison()
                 .ignoringFields(CREATED_AT_FIELD, LAST_UPDATED_AT_FIELD)
-                .isEqualTo(actual);
+                .isEqualTo(expected);
     }
 
     @Test
     @DisplayName("""
-            Verify that getById() endpoint works as expected when passing non-valid id
+            Verify that getById() endpoint works as expected when passing a non-valid id
             """)
     public void getById_NonValidRequest_Fail() throws Exception {
         // there is no note by this id, expecting EntityNotFoundException
@@ -224,7 +225,7 @@ class NoteControllerTest extends LinksHolder {
 
         assertThat(result.getResolvedException().getClass())
                 .isEqualTo(EntityNotFoundException.class);
-        assertThat(expectedMessage).isEqualTo(actualMessage);
+        assertThat(actualMessage).isEqualTo(expectedMessage);
     }
 
     @Sql(
@@ -333,22 +334,92 @@ class NoteControllerTest extends LinksHolder {
         String expectedMessage = "Searching should be done by at least 1 param";
         String actualMessage = result.getResolvedException().getMessage();
 
-        assertThat(expectedMessage).isEqualTo(actualMessage);
+        assertThat(actualMessage).isEqualTo(expectedMessage);
         assertThat(result.getResolvedException().getClass())
                 .isEqualTo(IllegalArgumentException.class);
     }
-}
-/*
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update a note by id",
-            description = """
-                    Pass as params for updating title or content (or both)
-                    """)
-    public NoteResponseDto update(
-            @PathVariable Long id,
-            @RequestBody NoteRequestDto requestDto
-    ) {
-        return noteService.update(id, requestDto);
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH, INSERT_ONE_NOTE_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD
+    )
+    @Test
+    @DisplayName("""
+            Verify that update() endpoint works as expected with a valid request
+            """)
+    public void update_ValidRequest_Success() throws Exception {
+        Long id = 1L;
+
+        NoteRequestDto requestDto = new NoteRequestDto("New title", "New content");
+
+        String content = objectMapper.writeValueAsString(requestDto);
+
+        MvcResult result = mockMvc.perform(put("/notes/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        NoteResponseDto actual = objectMapper.readValue(
+                result.getResponse().getContentAsString(), NoteResponseDto.class
+        );
+        NoteResponseDto expected = new NoteResponseDto(
+                1L, "New title", "New content", now(), now()
+        );
+
+        assertThat(actual).usingRecursiveComparison()
+                .ignoringFields(CREATED_AT_FIELD, LAST_UPDATED_AT_FIELD)
+                .isEqualTo(expected);
     }
- */
+
+    @Test
+    @DisplayName("""
+            Verify that update() endpoint works as expected with a non-valid request
+            """)
+    public void update_NonValidRequest_Fail() throws Exception {
+        Long id = 1L;
+
+        NoteRequestDto requestDto = new NoteRequestDto(null, null);
+
+        String content = objectMapper.writeValueAsString(requestDto);
+
+        MvcResult result = mockMvc.perform(put("/notes/" + id)
+                        .content(content)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        String expectedMessage = """
+                Both title and content cannot be empty
+                Update at least one of them
+                """;
+        String actualMessage = result.getResolvedException().getMessage();
+
+        assertThat(result.getResolvedException().getClass())
+                .isEqualTo(IllegalArgumentException.class);
+        assertThat(actualMessage).isEqualTo(expectedMessage);
+
+        id = -100L;
+        requestDto = new NoteRequestDto("Valid", "Valid");
+        content = objectMapper.writeValueAsString(requestDto);
+        result = mockMvc.perform(put("/notes/" + id)
+                .content(content)
+                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        assertThat(result.getResolvedException().getClass())
+                .isEqualTo(EntityNotFoundException.class);
+    }
+}
