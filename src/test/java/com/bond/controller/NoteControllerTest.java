@@ -10,11 +10,14 @@ import com.bond.dto.NoteRequestDto;
 import com.bond.dto.NoteResponseDto;
 import com.bond.holder.LinksHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +28,8 @@ import org.springframework.web.context.WebApplicationContext;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class NoteControllerTest extends LinksHolder {
     protected static MockMvc mockMvc;
+    private static final String CREATED_AT_FIELD = "createdAt";
+    private static final String LAST_UPDATED_AT_FIELD = "lastUpdatedAt";
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -77,9 +82,9 @@ class NoteControllerTest extends LinksHolder {
          (like setting the same time)
          so we ignore these field
          */
-        assertThat(actual).usingRecursiveComparison()
-                .ignoringFields("createdAt", "lastUpdatedAt")
-                .isEqualTo(expected);
+        assertThat(expected).usingRecursiveComparison()
+                .ignoringFields(CREATED_AT_FIELD, LAST_UPDATED_AT_FIELD)
+                .isEqualTo(actual);
     }
 
     @Sql(
@@ -122,4 +127,103 @@ class NoteControllerTest extends LinksHolder {
         // asserting that result array is empty
         assertThat(responseDtos).hasSize(0);
     }
+
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH, INSERT_FIVE_NOTES_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD
+    )
+    @Test
+    @DisplayName("""
+            Verify that getAll() endpoint works as expected with valid request
+            """)
+    public void getAll_ValidRequest_Success() throws Exception {
+        Pageable pageable = PageRequest.of(0, 5);
+
+        String pageableContent = objectMapper.writeValueAsString(pageable);
+
+        MvcResult result = mockMvc.perform(get("/notes")
+                        .content(pageableContent)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        NoteResponseDto[] responseDtos = objectMapper.readValue(
+                result.getResponse().getContentAsString(), NoteResponseDto[].class
+        );
+
+        assertThat(responseDtos).hasSize(5);
+
+        NoteResponseDto expectedFirstResponseDto = new NoteResponseDto(
+                1L, "First title", "First content", now(), now()
+        );
+
+        assertThat(expectedFirstResponseDto).usingRecursiveComparison()
+                .ignoringFields(CREATED_AT_FIELD, LAST_UPDATED_AT_FIELD)
+                .isEqualTo(responseDtos[0]);
+    }
+
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH, INSERT_ONE_NOTE_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    @Sql(
+            scripts = {
+                    DELETE_ALL_NOTES_FILE_PATH
+            },
+            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD
+    )
+    @Test
+    @DisplayName("""
+            Verify that getById() endpoint works as expected when passing valid id
+            """)
+    public void getById_ValidRequest_Success() throws Exception {
+        Long id = 1L;
+
+        MvcResult result = mockMvc.perform(get("/notes/" + id))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        NoteResponseDto expected = new NoteResponseDto(
+                1L, "First title", "First content", now(), now()
+        );
+
+        NoteResponseDto actual = objectMapper.readValue(
+                result.getResponse().getContentAsString(), NoteResponseDto.class
+        );
+
+        assertThat(expected).usingRecursiveComparison()
+                .ignoringFields(CREATED_AT_FIELD, LAST_UPDATED_AT_FIELD)
+                .isEqualTo(actual);
+    }
+
+    @Test
+    @DisplayName("""
+            Verify that getById() endpoint works as expected when passing non-valid id
+            """)
+    public void getById_NonValidRequest_Fail() throws Exception {
+        // there is no note by this id, expecting EntityNotFoundException
+        Long id = 12551L;
+
+        MvcResult result = mockMvc.perform(get("/notes/" + id))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        String expectedMessage = "Can't find a note with id " + id;
+        String actualMessage = result.getResolvedException().getMessage();
+
+        assertThat(result.getResolvedException().getClass())
+                .isEqualTo(EntityNotFoundException.class);
+        assertThat(expectedMessage).isEqualTo(actualMessage);
+    }
 }
+

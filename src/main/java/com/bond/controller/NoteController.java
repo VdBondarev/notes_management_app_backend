@@ -30,14 +30,14 @@ public class NoteController {
 
     @GetMapping
     @Operation(summary = "Get all notes with pageable sorting")
-    public List<NoteResponseDto> getNotes(Pageable pageable) {
-        return noteService.getAllNotes(pageable);
+    public List<NoteResponseDto> getAll(Pageable pageable) {
+        return noteService.getAll(pageable);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a note by id")
-    public NoteResponseDto getNoteById(@PathVariable Long id) {
-        return noteService.getNoteById(id);
+    public NoteResponseDto getById(@PathVariable Long id) {
+        return noteService.getById(id);
     }
 
     @PostMapping

@@ -27,7 +27,7 @@ public class NoteServiceImpl implements NoteService {
     private final NoteMapper noteMapper;
 
     @Override
-    public List<NoteResponseDto> getAllNotes(Pageable pageable) {
+    public List<NoteResponseDto> getAll(Pageable pageable) {
         return noteRepository.findAll(pageable)
                 .stream()
                 .map(noteMapper::toResponseDto)
@@ -63,7 +63,7 @@ public class NoteServiceImpl implements NoteService {
     }
 
     @Override
-    public NoteResponseDto getNoteById(Long id) {
+    public NoteResponseDto getById(Long id) {
         return noteRepository.findById(id)
                 .map(noteMapper::toResponseDto)
                 .orElseThrow(() -> new EntityNotFoundException(

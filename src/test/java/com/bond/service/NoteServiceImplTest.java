@@ -40,9 +40,9 @@ class NoteServiceImplTest {
 
     @Test
     @DisplayName("""
-            Verify that getAllNotes() method works as expected
+            Verify that getAll() method works as expected
             """)
-    public void getAllNotes_ValidPageable_ReturnsValidList() {
+    public void getAll_ValidPageable_ReturnsValidList() {
         Note firstExpectedNote = new Note()
                 .setId(1L)
                 .setTitle("First note")
@@ -71,7 +71,7 @@ class NoteServiceImplTest {
         when(noteMapper.toResponseDto(secondExpectedNote)).thenReturn(secondExpectedDto);
 
         List<NoteResponseDto> expectedList = List.of(firstExpectedDto, secondExpectedDto);
-        List<NoteResponseDto> actualList = noteService.getAllNotes(pageable);
+        List<NoteResponseDto> actualList = noteService.getAll(pageable);
 
         assertEquals(expectedList, actualList);
 
@@ -179,22 +179,11 @@ class NoteServiceImplTest {
         assertEquals(expectedResponseDto, actualResponseDto);
     }
 
-    /*
-    @Override
- *     public NoteResponseDto getNoteById(Long id) {
- *         return noteRepository.findById(id)
- *                 .map(noteMapper::toResponseDto)
- *                 .orElseThrow(() -> new EntityNotFoundException(
- *                         "Can't find a note with id " + id
- *                 ));
- *     }
-     */
-
     @Test
     @DisplayName("""
-            Verify that getNoteById() method works as expected with validId
+            Verify that getById() method works as expected with validId
             """)
-    public void getNoteById_ValidId_ReturnsValidResponseDto() {
+    public void getById_ValidId_ReturnsValidResponseDto() {
         Long id = 1L;
 
         Note expectedNote = new Note()
@@ -209,22 +198,22 @@ class NoteServiceImplTest {
         when(noteRepository.findById(id)).thenReturn(Optional.of(expectedNote));
         when(noteMapper.toResponseDto(expectedNote)).thenReturn(expectedResponseDto);
 
-        NoteResponseDto actualResponseDto = noteService.getNoteById(id);
+        NoteResponseDto actualResponseDto = noteService.getById(id);
 
         assertEquals(expectedResponseDto, actualResponseDto);
     }
 
     @Test
     @DisplayName("""
-            Verify that getNoteById() method works as expected with non-valid params
+            Verify that getById() method works as expected with non-valid params
             """)
-    public void getNoteById_NonValidParams_ThrowsException() {
+    public void getById_NonValidParams_ThrowsException() {
         Long id = -10L;
 
         when(noteRepository.findById(id)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(
-                EntityNotFoundException.class, () -> noteService.getNoteById(id)
+                EntityNotFoundException.class, () -> noteService.getById(id)
         );
 
         String expectedMessage = "Can't find a note with id " + id;
