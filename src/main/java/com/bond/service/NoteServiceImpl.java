@@ -9,6 +9,7 @@ import com.bond.model.Note;
 import com.bond.repository.NoteRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -28,7 +29,7 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public List<NoteResponseDto> getAll(Pageable pageable) {
-        return noteRepository.findAll(pageable)
+        return noteRepository.findAllWithDescendingOrderingByLastUpdatedAt(pageable)
                 .stream()
                 .map(noteMapper::toResponseDto)
                 .toList();
@@ -77,13 +78,16 @@ public class NoteServiceImpl implements NoteService {
     }
 
     @Override
-    public List<NoteResponseDto> search(NoteRequestDto requestDto, Pageable pageable) {
-        if (requestDto.content() == null && requestDto.title() == null) {
+    public List<NoteResponseDto> search(String title, String content, Pageable pageable) {
+        if ((title == null && content == null)
+                || (Objects.requireNonNull(title).isEmpty()
+                && Objects.requireNonNull(content).isEmpty())
+        ) {
             throw new IllegalArgumentException("Searching should be done by at least 1 param");
         }
         ExampleMatcher exampleMatcher = createExampleMatcher();
         Example<Note> example = Example.of(
-                getNoteFromSearchParams(requestDto),
+                getNoteFromSearchParams(title, content),
                 exampleMatcher
         );
         return noteRepository.findAll(example, pageable)
@@ -92,10 +96,10 @@ public class NoteServiceImpl implements NoteService {
                 .toList();
     }
 
-    private Note getNoteFromSearchParams(NoteRequestDto requestDto) {
+    private Note getNoteFromSearchParams(String title, String content) {
         return new Note()
-                .setTitle(requestDto.title())
-                .setContent(requestDto.content());
+                .setTitle(title)
+                .setContent(content);
     }
 
     private ExampleMatcher createExampleMatcher() {

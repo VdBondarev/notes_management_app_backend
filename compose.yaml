@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL
   database:
-    platform: linux/x86_64
+    platform: linux/amd64
     image: 'postgres:latest'
     restart: unless-stopped
     env_file: ./.env
@@ -20,7 +20,7 @@ services:
       retries: 3
 
   app:
-    platform: linux/x86_64
+    platform: linux/amd64
     depends_on:
       - database
     restart: on-failure

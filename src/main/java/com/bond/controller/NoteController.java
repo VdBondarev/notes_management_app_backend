@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -75,14 +76,18 @@ public class NoteController {
             description = """
                     You can search by 2 params (title and content)
                     
-                    If both of them are null - you will not get any notes
+                    If both of them are null or empty - you will not get any notes
                     
                     If one of them is null - searching will be executed like that: %your_param%
                     
                     If both of them are present
-                    Searching will be executed like that: %your_title% and %your_content%
+                    Searching will be executed like that: %your_title% AND %your_content%
                     """)
-    public List<NoteResponseDto> search(@RequestBody NoteRequestDto requestDto, Pageable pageable) {
-        return noteService.search(requestDto, pageable);
+    public List<NoteResponseDto> search(
+            @RequestParam String title,
+            @RequestParam String content,
+            Pageable pageable
+    ) {
+        return noteService.search(title, content, pageable);
     }
 }
