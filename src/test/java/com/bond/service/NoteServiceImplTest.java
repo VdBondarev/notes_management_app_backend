@@ -66,7 +66,7 @@ class NoteServiceImplTest {
         NoteResponseDto firstExpectedDto = createResponseDtoFromModel(firstExpectedNote);
         NoteResponseDto secondExpectedDto = createResponseDtoFromModel(secondExpectedNote);
 
-        when(noteRepository.findAllWithDescendingOrderingByLastUpdatedAt(pageable))
+        when(noteRepository.findAll(pageable))
                 .thenReturn(page);
         when(noteMapper.toResponseDto(firstExpectedNote)).thenReturn(firstExpectedDto);
         when(noteMapper.toResponseDto(secondExpectedNote)).thenReturn(secondExpectedDto);
@@ -77,7 +77,7 @@ class NoteServiceImplTest {
         assertEquals(expectedList, actualList);
 
         verify(noteRepository, times(1))
-                .findAllWithDescendingOrderingByLastUpdatedAt(pageable);
+                .findAll(pageable);
         verify(noteMapper, times(1)).toResponseDto(firstExpectedNote);
         verify(noteMapper, times(1)).toResponseDto(secondExpectedNote);
         verifyNoMoreInteractions(noteMapper);

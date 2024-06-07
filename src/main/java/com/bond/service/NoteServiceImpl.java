@@ -28,7 +28,7 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public List<NoteResponseDto> getAll(Pageable pageable) {
-        return noteRepository.findAllWithDescendingOrderingByLastUpdatedAt(pageable)
+        return noteRepository.findAll(pageable)
                 .stream()
                 .map(noteMapper::toResponseDto)
                 .toList();
