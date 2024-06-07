@@ -290,7 +290,6 @@ class NoteControllerTest extends LinksHolder {
             """)
     public void search_ValidRequest_Success() throws Exception {
         // it should be case-insensitive and find all the required notes
-        NoteRequestDto requestDto = new NoteRequestDto("TitLE", "CONtEnT");
         String title = "TitLE";
         String content = "CONtEnt";
 
