@@ -9,7 +9,6 @@ import com.bond.model.Note;
 import com.bond.repository.NoteRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -80,8 +79,8 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public List<NoteResponseDto> search(String title, String content, Pageable pageable) {
         if ((title == null && content == null)
-                || (Objects.requireNonNull(title).isEmpty()
-                && Objects.requireNonNull(content).isEmpty())
+                || (title != null && title.isEmpty()
+                && content != null && content.isEmpty())
         ) {
             throw new IllegalArgumentException("Searching should be done by at least 1 param");
         }

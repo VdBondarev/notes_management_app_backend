@@ -84,8 +84,8 @@ public class NoteController {
                     Searching will be executed like that: %your_title% AND %your_content%
                     """)
     public List<NoteResponseDto> search(
-            @RequestParam String title,
-            @RequestParam String content,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String content,
             Pageable pageable
     ) {
         return noteService.search(title, content, pageable);
