@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL
   database:
-    platform: linux/x86_64
+    platform: linux/amd64
     image: 'postgres:latest'
     restart: unless-stopped
     env_file: ./.env
@@ -20,7 +20,7 @@ services:
       retries: 3
 
   app:
-    platform: linux/x86_64
+    platform: linux/amd64
     depends_on:
       - database
     restart: on-failure
@@ -35,6 +35,6 @@ services:
         "spring.datasource.url": "jdbc:postgresql://database:${POSTGRESQL_DOCKER_PORT}/${POSTGRESQL_DATABASE}",
         "spring.datasource.username": "${POSTGRESQL_USER}",
         "spring.datasource.password": "${POSTGRESQL_PASSWORD}",
-        "spring.jpa.properties.hibernate.dialect": "org.hibernate.dialect.PostgreSQLDialect"
+        "spring.jpa.properties.hibernate.dialect": "org.hibernate.dialect.PostgreSQLDialect"        
         }'
       JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"

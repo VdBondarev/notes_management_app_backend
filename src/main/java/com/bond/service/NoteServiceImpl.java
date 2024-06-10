@@ -77,13 +77,16 @@ public class NoteServiceImpl implements NoteService {
     }
 
     @Override
-    public List<NoteResponseDto> search(NoteRequestDto requestDto, Pageable pageable) {
-        if (requestDto.content() == null && requestDto.title() == null) {
+    public List<NoteResponseDto> search(String title, String content, Pageable pageable) {
+        if ((title == null && content == null)
+                || (title != null && title.isEmpty()
+                && content != null && content.isEmpty())
+        ) {
             throw new IllegalArgumentException("Searching should be done by at least 1 param");
         }
         ExampleMatcher exampleMatcher = createExampleMatcher();
         Example<Note> example = Example.of(
-                getNoteFromSearchParams(requestDto),
+                getNoteFromSearchParams(title, content),
                 exampleMatcher
         );
         return noteRepository.findAll(example, pageable)
@@ -92,10 +95,10 @@ public class NoteServiceImpl implements NoteService {
                 .toList();
     }
 
-    private Note getNoteFromSearchParams(NoteRequestDto requestDto) {
+    private Note getNoteFromSearchParams(String title, String content) {
         return new Note()
-                .setTitle(requestDto.title())
-                .setContent(requestDto.content());
+                .setTitle(title)
+                .setContent(content);
     }
 
     private ExampleMatcher createExampleMatcher() {

@@ -66,7 +66,8 @@ class NoteServiceImplTest {
         NoteResponseDto firstExpectedDto = createResponseDtoFromModel(firstExpectedNote);
         NoteResponseDto secondExpectedDto = createResponseDtoFromModel(secondExpectedNote);
 
-        when(noteRepository.findAll(pageable)).thenReturn(page);
+        when(noteRepository.findAll(pageable))
+                .thenReturn(page);
         when(noteMapper.toResponseDto(firstExpectedNote)).thenReturn(firstExpectedDto);
         when(noteMapper.toResponseDto(secondExpectedNote)).thenReturn(secondExpectedDto);
 
@@ -75,7 +76,8 @@ class NoteServiceImplTest {
 
         assertEquals(expectedList, actualList);
 
-        verify(noteRepository, times(1)).findAll(pageable);
+        verify(noteRepository, times(1))
+                .findAll(pageable);
         verify(noteMapper, times(1)).toResponseDto(firstExpectedNote);
         verify(noteMapper, times(1)).toResponseDto(secondExpectedNote);
         verifyNoMoreInteractions(noteMapper);
@@ -255,9 +257,10 @@ class NoteServiceImplTest {
         when(noteMapper.toResponseDto(firstExpectedNote)).thenReturn(firstResponseDto);
         when(noteMapper.toResponseDto(secondExpectedNote)).thenReturn(secondResponseDto);
 
-        NoteRequestDto requestDto = new NoteRequestDto("test", "test");
+        String title = "test";
+        String content = "test";
 
-        List<NoteResponseDto> actualList = noteService.search(requestDto, pageable);
+        List<NoteResponseDto> actualList = noteService.search(title, content, pageable);
         List<NoteResponseDto> expectedList = List.of(firstResponseDto, secondResponseDto);
 
         assertEquals(expectedList, actualList);

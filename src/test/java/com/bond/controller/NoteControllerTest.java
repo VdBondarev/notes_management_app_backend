@@ -13,6 +13,7 @@ import com.bond.dto.NoteResponseDto;
 import com.bond.holder.LinksHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -287,16 +290,20 @@ class NoteControllerTest extends LinksHolder {
             """)
     public void search_ValidRequest_Success() throws Exception {
         // it should be case-insensitive and find all the required notes
-        NoteRequestDto requestDto = new NoteRequestDto("TitLE", "CONtEnT");
+        String title = "TitLE";
+        String content = "CONtEnt";
 
         Pageable pageable = PageRequest.of(0, 5);
 
         String pageableContent = objectMapper.writeValueAsString(pageable);
-        String requestDtoContent = objectMapper.writeValueAsString(requestDto);
+
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.put("title", List.of(title));
+        map.put("content", List.of(content));
 
         MvcResult result = mockMvc.perform(get("/notes/search")
                         .content(pageableContent)
-                        .content(requestDtoContent)
+                        .params(map)
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
@@ -315,17 +322,21 @@ class NoteControllerTest extends LinksHolder {
             Verify that search() endpoint works as expected with a non-valid request
             """)
     public void search_NonValidRequest_Fail() throws Exception {
-        // this request should not pass and should face an exception
-        NoteRequestDto requestDto = new NoteRequestDto(null, null);
-
         Pageable pageable = PageRequest.of(0, 5);
 
         String pageableContent = objectMapper.writeValueAsString(pageable);
-        String requestDtoContent = objectMapper.writeValueAsString(requestDto);
+
+        // expecting that now a request should not pass
+        String title = "";
+        String content = "";
+
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.put("title", List.of(title));
+        map.put("content", List.of(content));
 
         MvcResult result = mockMvc.perform(get("/notes/search")
                         .content(pageableContent)
-                        .content(requestDtoContent)
+                        .params(map)
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isBadRequest())

@@ -15,12 +15,12 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: title
-                  type: VARCHAR(255)
+                  type: VARCHAR(50)
                   constraints:
                     nullable: false
               - column:
                   name: content
-                  type: VARCHAR(255)
+                  type: VARCHAR(20000)
                   constraints:
                     nullable: false
               - column:

@@ -17,5 +17,5 @@ public interface NoteService {
 
     void delete(Long id);
 
-    List<NoteResponseDto> search(NoteRequestDto requestDto, Pageable pageable);
+    List<NoteResponseDto> search(String title, String content, Pageable pageable);
 }
