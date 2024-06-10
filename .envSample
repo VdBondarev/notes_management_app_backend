@@ -10,4 +10,4 @@ SPRING_LOCAL_PORT=8088
 SPRING_DOCKER_PORT=8080
 DEBUG_PORT=5005
 
-frontend.url=http://localhost:21515521512
+frontend.url=http://localhost:3000
