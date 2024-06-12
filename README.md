@@ -4,7 +4,7 @@
 
 ### [Frontend is here.](https://github.com/VdBondarev/notes_management_app_frontend)
 
-## [See the detailed video-explanation on starting and using both backend and frontend applications by following this link.](https://www.loom.com/share/7ec76ef8a02144bb93836066957f34ce?sid=b76b5c6e-363f-4e58-9848-03c076361ea4)
+## [See the detailed video-explanation on starting and using both backend and frontend applications by following this link.](https://www.loom.com/share/995da21a4a6e4b03bfdf7beab86a2ee9?sid=f132659f-6bdb-4c53-a428-7c6a3e26a737)
 
 ## Main technologies used
 
